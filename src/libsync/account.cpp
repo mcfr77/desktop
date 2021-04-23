@@ -236,9 +236,6 @@ void Account::trySetupPushNotifications()
                     return;
                 }
                 Q_ASSERT(!_pushNotifications->isReady());
-                // _pushNotifications->deleteLater();
-                // _pushNotifications = nullptr;
-                qCInfo(lcAccount) << "Emit it";
                 emit pushNotificationsDisabled(this);
                 _pushNotificationsReconnectTimer.start();
             };
