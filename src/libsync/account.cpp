@@ -47,6 +47,10 @@
 
 using namespace QKeychain;
 
+namespace {
+constexpr int pushNotificationsReconnectInterval = 1000 * 60 * 5;
+}
+
 namespace OCC {
 
 Q_LOGGING_CATEGORY(lcAccount, "nextcloud.sync.account", QtInfoMsg)
@@ -201,31 +205,46 @@ void Account::setCredentials(AbstractCredentials *cred)
         this, &Account::slotCredentialsAsked);
 
     trySetupPushNotifications();
+    _pushNotificationsReconnectTimer.setInterval(pushNotificationsReconnectInterval);
+    connect(&_pushNotificationsReconnectTimer, &QTimer::timeout, this, &Account::trySetupPushNotifications);
+}
+
+void Account::setPushNotificationsReconnectInterval(int interval)
+{
+    _pushNotificationsReconnectTimer.setInterval(interval);
 }
 
 void Account::trySetupPushNotifications()
 {
+    // Stop the timer to prevent parallel setup attempts
+    _pushNotificationsReconnectTimer.stop();
+
     if (_capabilities.availablePushNotifications() != PushNotificationType::None) {
         qCInfo(lcAccount) << "Try to setup push notifications";
 
         if (!_pushNotifications) {
             _pushNotifications = new PushNotifications(this, this);
 
-            connect(_pushNotifications, &PushNotifications::ready, this, [this]() { emit pushNotificationsReady(this); });
+            connect(_pushNotifications, &PushNotifications::ready, this, [this]() {
+                _pushNotificationsReconnectTimer.stop();
+                emit pushNotificationsReady(this);
+            });
 
-            const auto deletePushNotifications = [this]() {
-                qCInfo(lcAccount) << "Delete push notifications object because authentication failed or connection lost";
+            const auto disablePushNotifications = [this]() {
+                qCInfo(lcAccount) << "Disable push notifications object because authentication failed or connection lost";
                 if (!_pushNotifications) {
                     return;
                 }
                 Q_ASSERT(!_pushNotifications->isReady());
-                _pushNotifications->deleteLater();
-                _pushNotifications = nullptr;
+                // _pushNotifications->deleteLater();
+                // _pushNotifications = nullptr;
+                qCInfo(lcAccount) << "Emit it";
                 emit pushNotificationsDisabled(this);
+                _pushNotificationsReconnectTimer.start();
             };
 
-            connect(_pushNotifications, &PushNotifications::connectionLost, this, deletePushNotifications);
-            connect(_pushNotifications, &PushNotifications::authenticationFailed, this, deletePushNotifications);
+            connect(_pushNotifications, &PushNotifications::connectionLost, this, disablePushNotifications);
+            connect(_pushNotifications, &PushNotifications::authenticationFailed, this, disablePushNotifications);
         }
         // If push notifications already running it is no problem to call setup again
         _pushNotifications->setup();
