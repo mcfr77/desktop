@@ -48,7 +48,7 @@
 using namespace QKeychain;
 
 namespace {
-constexpr int pushNotificationsReconnectInterval = 1000 * 60 * 5;
+constexpr int pushNotificationsReconnectInterval = 1000 * 60 * 2;
 }
 
 namespace OCC {
