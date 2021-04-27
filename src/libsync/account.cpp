@@ -63,6 +63,9 @@ Account::Account(QObject *parent)
 {
     qRegisterMetaType<AccountPtr>("AccountPtr");
     qRegisterMetaType<Account *>("Account*");
+
+    _pushNotificationsReconnectTimer.setInterval(pushNotificationsReconnectInterval);
+    connect(&_pushNotificationsReconnectTimer, &QTimer::timeout, this, &Account::trySetupPushNotifications);
 }
 
 AccountPtr Account::create()
@@ -205,8 +208,6 @@ void Account::setCredentials(AbstractCredentials *cred)
         this, &Account::slotCredentialsAsked);
 
     trySetupPushNotifications();
-    _pushNotificationsReconnectTimer.setInterval(pushNotificationsReconnectInterval);
-    connect(&_pushNotificationsReconnectTimer, &QTimer::timeout, this, &Account::trySetupPushNotifications);
 }
 
 void Account::setPushNotificationsReconnectInterval(int interval)
@@ -235,9 +236,12 @@ void Account::trySetupPushNotifications()
                 if (!_pushNotifications) {
                     return;
                 }
-                Q_ASSERT(!_pushNotifications->isReady());
-                emit pushNotificationsDisabled(this);
-                _pushNotificationsReconnectTimer.start();
+                if (!_pushNotifications->isReady()) {
+                    emit pushNotificationsDisabled(this);
+                }
+                if (!_pushNotificationsReconnectTimer.isActive()) {
+                    _pushNotificationsReconnectTimer.start();
+                }
             };
 
             connect(_pushNotifications, &PushNotifications::connectionLost, this, disablePushNotifications);
