@@ -188,7 +188,7 @@ private slots:
         QCOMPARE(pushNotificationsDisabledSpy.count(), 1);
     }
 
-    void testOnWebSocketSslError_sslError_deletePushNotifications()
+    void testOnWebSocketSslError_sslError_disablePushNotifications()
     {
         FakeWebSocketServer fakeServer;
         auto account = FakeWebSocketServer::createAccount();
