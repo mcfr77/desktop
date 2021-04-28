@@ -67,7 +67,7 @@ bool showEnableE2eeWithVirtualFilesWarningDialog(QObject *parent)
     QMessageBox e2eeWithVirtualFilesWarningMsgBox;
     e2eeWithVirtualFilesWarningMsgBox.setText(parent->tr("End-to-End Encryption with Virtual Files"));
     e2eeWithVirtualFilesWarningMsgBox.setInformativeText(parent->tr("You seem to have the Virtual Files feature enabled on this folder. At "
-                                                                    " the moment, it is not possible to implicit downloading virtual files that are "
+                                                                    " the moment, it is not possible to implicit download virtual files that are "
                                                                     "End-to-End encrypted. To get the best experience with Virtual Files and"
                                                                     " End-to-End Encryption, make sure the encrypted folder is marked with"
                                                                     " \"Make always available locally\"."));

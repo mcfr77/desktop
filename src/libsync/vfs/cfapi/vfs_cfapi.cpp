@@ -314,7 +314,7 @@ void VfsCfApi::requestHydration(const QString &requestId, const QString &path)
         e2eeFileDownloadRequestWarningMsgBox.setText(tr("Download of End-to-End encrypted file failed"));
         e2eeFileDownloadRequestWarningMsgBox.setInformativeText(tr("It seems that you are trying to download a virtual file that"
                                                                    " is End-to-End encrypted. Implicitly downloading such files is not"
-                                                                   " supported at the moment. To workaround that issue, go to the"
+                                                                   " supported at the moment. To workaround this issue, go to the"
                                                                    " settings and mark the encrypted folder with \"Make always available"
                                                                    " locally\"."));
         e2eeFileDownloadRequestWarningMsgBox.setIcon(QMessageBox::Warning);
