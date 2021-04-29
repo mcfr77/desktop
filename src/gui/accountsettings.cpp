@@ -67,21 +67,17 @@ bool showEnableE2eeWithVirtualFilesWarningDialog(QObject *parent)
     QMessageBox e2eeWithVirtualFilesWarningMsgBox;
     e2eeWithVirtualFilesWarningMsgBox.setText(parent->tr("End-to-End Encryption with Virtual Files"));
     e2eeWithVirtualFilesWarningMsgBox.setInformativeText(parent->tr("You seem to have the Virtual Files feature enabled on this folder. At "
-                                                                    " the moment, it is not possible to implicit download virtual files that are "
+                                                                    " the moment, it is not possible to implicitly download virtual files that are "
                                                                     "End-to-End encrypted. To get the best experience with Virtual Files and"
                                                                     " End-to-End Encryption, make sure the encrypted folder is marked with"
                                                                     " \"Make always available locally\"."));
     e2eeWithVirtualFilesWarningMsgBox.setIcon(QMessageBox::Warning);
     const auto dontEncryptButton = e2eeWithVirtualFilesWarningMsgBox.button(QMessageBox::StandardButton::Ok);
     const auto encryptButton = e2eeWithVirtualFilesWarningMsgBox.button(QMessageBox::StandardButton::Cancel);
-    dontEncryptButton->setText(parent->tr("Encrypt this folder"));
-    encryptButton->setText(parent->tr("Encrypt this folder"));
+    dontEncryptButton->setText(parent->tr("Don't encrypt folder"));
+    encryptButton->setText(parent->tr("Encrypt folder"));
 
-    if (e2eeWithVirtualFilesWarningMsgBox.clickedButton() == dontEncryptButton) {
-        return false;
-    }
-
-    return true;
+    return e2eeWithVirtualFilesWarningMsgBox.clickedButton() != dontEncryptButton;
 }
 }
 
