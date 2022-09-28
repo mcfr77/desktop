@@ -42,6 +42,10 @@
 static const char versionC[] = "version";
 static const int maxFoldersVersion = 1;
 
+namespace {
+static constexpr auto editFileLocallyName = "editFileLocallyName";
+}
+
 namespace OCC {
 
 Q_LOGGING_CATEGORY(lcFolderMan, "nextcloud.gui.folder.manager", QtInfoMsg)
@@ -1473,11 +1477,24 @@ void FolderMan::editFileLocally(const QString &accountDisplayName, const QString
         return;
     }
 
-    // In case the VFS mode is enabled and a file is not yet hydrated, we must call QDesktopServices::openUrl from a separate thread, or, there will be a freeze.
-    // To avoid searching for a specific folder and checking if the VFS is enabled - we just always call it from a separate thread.
-    QtConcurrent::run([foundFiles] {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(foundFiles.first()));
-    });
+    const auto localFilePath = foundFiles.first();
+    const auto folderForFile = folderForPath(localFilePath);
+
+    if (!folderForFile) {
+        showError(accountFound, tr("Could not find a folder to sync."), relPath);
+        return;
+    }
+    
+    const auto relPathSplit = relPath.split(QLatin1Char('/'));
+    if (relPathSplit.size() > 0) {
+        Systray::instance()->createEditFileLocallyLoadingDialog(relPathSplit.last());
+    } else {
+        showError(accountFound, tr("Could not find a file for local editing. Make sure its path is valid and it is synced locally."), relPath);
+        return;
+    }
+    folderForFile->setProperty(editFileLocallyName, localFilePath);
+    folderForFile->startSync();
+    QObject::connect(folderForFile, &Folder::syncFinished, this, &FolderMan::slotSyncFinishedBeforeOpeningForLocalEditing);
 }
 
 void FolderMan::trayOverallStatus(const QList<Folder *> &folders,
@@ -1840,6 +1857,22 @@ void FolderMan::slotConnectToPushNotifications(Account *account)
         qCInfo(lcFolderMan) << "Push notifications ready";
         connect(pushNotifications, &PushNotifications::filesChanged, this, &FolderMan::slotProcessFilesPushNotification, Qt::UniqueConnection);
     }
+}
+
+void FolderMan::slotSyncFinishedBeforeOpeningForLocalEditing(const OCC::SyncResult &result)
+{
+    Q_UNUSED(result);
+    const auto folderForFile = qobject_cast<Folder *>(sender());
+    QObject::disconnect(folderForFile, &Folder::syncFinished, this, &FolderMan::slotSyncFinishedBeforeOpeningForLocalEditing);
+    const auto localFilePath = folderForFile->property(editFileLocallyName).toString();
+    folderForFile->setProperty(editFileLocallyName, {});
+    // In case the VFS mode is enabled and a file is not yet hydrated, we must call QDesktopServices::openUrl from a
+    // separate thread, or, there will be a freeze. To avoid searching for a specific folder and checking if the VFS is
+    // enabled - we just always call it from a separate thread.
+    QtConcurrent::run([localFilePath]() {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(localFilePath));
+        Systray::instance()->destroyEditFileLocallyLoadingDialog();
+    });
 }
 
 } // namespace OCC

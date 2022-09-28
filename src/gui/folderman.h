@@ -309,6 +309,8 @@ private slots:
     void slotProcessFilesPushNotification(Account *account);
     void slotConnectToPushNotifications(Account *account);
 
+    void slotSyncFinishedBeforeOpeningForLocalEditing(const OCC::SyncResult &result);
+
 private:
     /** Adds a new folder, does not add it to the account settings and
      *  does not set an account on the new folder.
