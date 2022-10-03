@@ -59,7 +59,12 @@ void FileActivityListModel::load()
 
     const auto folderRelativePath = _localPath.mid(folder->cleanPath().length() + 1);
     SyncJournalFileRecord record;
-    folder->journalDb()->getFileRecord(folderRelativePath, &record);
+    const auto recordOk = folder->journalDb()->getFileRecord(folderRelativePath, &record);
+
+    if (!recordOk) {
+        qCWarning(lcFileActivityListModel) << "Invalid file record for path:" << _localPath << "will not load activity list model.";
+        return;
+    }
 
     _objectId = record.numericFileId().toInt();
     slotRefreshActivity();
